@@ -13,6 +13,14 @@ jobs:
         run: |
           unzip -o witnessed-android.zip -d _unpacked
           ls _unpacked
+      - name: Apply source overrides
+        run: |
+          DEST=_unpacked/witnessed-android/app/src/main/java/com/trillix/witnessed
+          cp app/src/main/java/com/trillix/witnessed/domain/Insights.kt "$DEST/domain/Insights.kt"
+          cp app/src/main/java/com/trillix/witnessed/ui/AppViewModel.kt "$DEST/ui/AppViewModel.kt"
+          cp app/src/main/java/com/trillix/witnessed/ui/Home.kt "$DEST/ui/Home.kt"
+          echo "Overrides applied:"
+          ls -l "$DEST/domain/Insights.kt" "$DEST/ui/AppViewModel.kt" "$DEST/ui/Home.kt"
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -32,5 +40,3 @@ jobs:
         with:
           name: witnessed-debug-apk
           path: _unpacked/witnessed-android/app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error
-          retention-days: 30
