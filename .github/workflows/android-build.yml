@@ -19,8 +19,9 @@ jobs:
           cp app/src/main/java/com/trillix/witnessed/domain/Insights.kt "$DEST/domain/Insights.kt"
           cp app/src/main/java/com/trillix/witnessed/ui/AppViewModel.kt "$DEST/ui/AppViewModel.kt"
           cp app/src/main/java/com/trillix/witnessed/ui/Home.kt "$DEST/ui/Home.kt"
+          cp app/src/main/java/com/trillix/witnessed/service/WitnessAccessibilityService.kt "$DEST/service/WitnessAccessibilityService.kt"
           echo "Overrides applied:"
-          ls -l "$DEST/domain/Insights.kt" "$DEST/ui/AppViewModel.kt" "$DEST/ui/Home.kt"
+          ls -l "$DEST/domain/Insights.kt" "$DEST/ui/AppViewModel.kt" "$DEST/ui/Home.kt" "$DEST/service/WitnessAccessibilityService.kt"
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
