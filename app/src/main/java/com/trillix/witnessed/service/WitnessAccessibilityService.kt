@@ -27,12 +27,12 @@ class WitnessAccessibilityService : AccessibilityService() {
     @Volatile private var watchedPackage: String? = null
     @Volatile private var enabled = false
 
-    // The last real foreground app (our own wall is never recorded here). A fresh
-    // entry into the watched app is prev != watched; that, plus a short re-entry
-    // cooldown, is what stops the resolve -> app-returns -> re-trigger loop.
+    // The last real foreground app (our own wall is never recorded here). We only
+    // intervene on a fresh entry (prev != watched). A tiny dedupe window collapses
+    // duplicate window events fired for the same single app open.
     @Volatile private var lastForeground: String? = null
     private var lastTriggerAt = 0L
-    private val reentryCooldownMs = 10_000L
+    private val dedupeMs = 1_500L
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -62,14 +62,17 @@ class WitnessAccessibilityService : AccessibilityService() {
         lastForeground = pkg
 
         // Only intervene on a *fresh entry* into the watched app: you came from a
-        // different app and landed here. Staying in it (and the Continue -> app
-        // returns bounce, including the transient system windows in between) keeps
-        // prev == watched or falls inside the cooldown, so it can't re-fire.
+        // different app and landed here. Staying in it keeps prev == watched.
         if (pkg != watched) return
         if (prev == watched) return
 
+        // The wall sets a short process-level mute when it resolves. This is what
+        // actually kills the Continue -> app-returns loop, and unlike the old
+        // per-instance cooldown it survives the OS recycling this service.
+        if (InterventionGate.isMuted()) return
+
         val now = System.currentTimeMillis()
-        if (now - lastTriggerAt < reentryCooldownMs) return
+        if (now - lastTriggerAt < dedupeMs) return
         lastTriggerAt = now
 
         val intent = Intent(this, InterventionActivity::class.java)
@@ -84,4 +87,17 @@ class WitnessAccessibilityService : AccessibilityService() {
         super.onDestroy()
         scope.cancel()
     }
+}
+
+/**
+ * Process-level gate between the wall and the detector. When the wall resolves it
+ * mutes detection briefly, so the watched app returning to the foreground can't
+ * immediately re-trigger. Kept in-process (not in the service instance) so it
+ * survives the OS tearing down and recreating the AccessibilityService — the
+ * failure mode that defeated the previous in-service cooldown.
+ */
+object InterventionGate {
+    @Volatile private var muteUntil: Long = 0L
+    fun mute(durationMs: Long = 12_000L) { muteUntil = System.currentTimeMillis() + durationMs }
+    fun isMuted(): Boolean = System.currentTimeMillis() < muteUntil
 }
