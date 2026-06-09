@@ -60,6 +60,9 @@ import com.trillix.witnessed.ui.theme.TextMain
 
 private fun lvl(mode: Mode) = when (mode) { Mode.LIGHT -> 0; Mode.SERIOUS -> 1; Mode.NOBULL -> 2 }
 
+// Bump this each build so we can confirm on-device which APK is actually running.
+private const val BUILD_TAG = "BUILD F2"
+
 @Composable
 fun HomeScreen(state: UiState, vm: AppViewModel, onTrigger: () -> Unit) {
     var tab by remember { mutableStateOf("mirror") }
@@ -74,6 +77,8 @@ fun HomeScreen(state: UiState, vm: AppViewModel, onTrigger: () -> Unit) {
         ) {
             Text(titles[tab] ?: "", color = TextMain, fontFamily = Serif, fontWeight = FontWeight.Medium,
                 fontSize = 19.sp, modifier = Modifier.weight(1f))
+            Text(BUILD_TAG, color = Faint, fontFamily = Mono, fontSize = 9.5.sp, letterSpacing = 1.sp)
+            Spacer(Modifier.width(10.dp))
             Seal(size = 26.dp)
         }
 
